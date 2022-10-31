@@ -118,3 +118,9 @@ block:
 
   let q = p.merge
   q.xray(fno)
+
+  # test split and merge alpha
+  let yplanes = fn_yellow.readImage.split
+  let aplanes = fn_yellow_alpha.readImage.split
+  @[yplanes[0], yplanes[1], yplanes[2]].merge.xray(fn_yellow) # no alpha
+  @[yplanes[0], yplanes[1], yplanes[2], aplanes[3]].merge.xray(fn_yellow_alpha)

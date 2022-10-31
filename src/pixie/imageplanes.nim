@@ -100,14 +100,14 @@ proc split*(im: Image): seq[ImagePlane]= # {.hasSimd, raises: [].} =
       result[i].px[j] = cast[array[4, uint8]](rgba)[i]
 
 proc merge*(prgba: seq[ImagePlane]): Image= # {.hasSimd, raises: [].} =
-  assert prgba.len == 4 # TODO: support 3 ?
+  assert prgba.len == 3 or prgba.len == 4
   let
     w = prgba[0].w
     h = prgba[0].h
-  result = newImage(w, h)
+  result = newImage(w, h) # expects 4ch RGBX
   for j in 0..<result.data.len:
-    result.data[j] = rgbx(
-      prgba[0].px[j], prgba[1].px[j], prgba[2].px[j], prgba[3].px[j])
+    let a: uint8 = if prgba.len == 4: prgba[3].px[j] else: 255
+    result.data[j] = rgbx(prgba[0].px[j], prgba[1].px[j], prgba[2].px[j], a)
   result.data.toPremultipliedAlpha # must call after change alpha direct
 
 when defined(release):
