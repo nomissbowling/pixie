@@ -10,6 +10,7 @@ block:
     fn_base = "tests/images"
     fn_yellow = fmt"{fn_base}/planes_flip_yellow.png"
     fn_yellow_alpha = fmt"{fn_base}/planes_flip_yellow_alpha.png"
+    fn_alpha = fmt"{fn_base}/planes_flip_alpha.png"
     fn_RGBA_0 = fmt"{fn_base}/planes_flip_RGBA_0.png"
     fn_RGBA_1 = fmt"{fn_base}/planes_flip_RGBA_1.png"
     fn_RGBA_2 = fmt"{fn_base}/planes_flip_RGBA_2.png"
@@ -120,7 +121,28 @@ block:
   q.xray(fno)
 
   # test split and merge alpha
-  let yplanes = fn_yellow.readImage.split
-  let aplanes = fn_yellow_alpha.readImage.split
+  let
+    yplanes = fn_yellow.readImage.split
+    aplanes = fn_yellow_alpha.readImage.split
+    a255 = newImage(64, 64)
+    # a192 = newImage(32, 32)
+    a128 = newImage(16, 16)
+    a0 = newImage(8, 8)
   @[yplanes[0], yplanes[1], yplanes[2]].merge.xray(fn_yellow) # no alpha
   @[yplanes[0], yplanes[1], yplanes[2], aplanes[3]].merge.xray(fn_yellow_alpha)
+
+  # check alpha and toGray
+  # to correct accuracy, moved floating point precision (multiply 1000 uint32)
+  a255.fill(rgba(255, 255, 255, 255))
+  # a192.fill(rgba(192, 192, 192, 255)) # not rgba(255, 255, 255, 192)
+  a128.fill(rgba(128, 128, 128, 255)) # not rgba(255, 255, 255, 128)
+  a0.fill(rgba(0, 0, 0, 255)) # not rgba(255, 255, 255, 0)
+  # a255.draw(a192, translate(vec2(16, 16)))
+  a255.draw(a128, translate(vec2(24, 24)))
+  a255.draw(a0, translate(vec2(28, 28)))
+  let alpha = a255.toGray
+  when defined(create): # create before test
+    aplanes[3].toRGBA.writeFile(fn_alpha)
+    # alpha.toRGBA.writeFile(fn_alpha)
+  alpha.toRGBA.xray(fn_alpha)
+  @[yplanes[0], yplanes[1], yplanes[2], alpha].merge.xray(fn_yellow_alpha)

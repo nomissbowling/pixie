@@ -27,19 +27,22 @@ template dataIndex*(imageplane: ImagePlane, x, y: int): int =
   imageplane.w * y + x
 
 proc toGray*(rgba: ColorRGBA): uint8 {.inline, raises: [].} =
+  # to correct accuracy, moved floating point precision (multiply 1000 uint32)
   # 0.2126R + 0.7152G + 0.0722B = Y of CIE XYZ
   # 0.300R + 0.590G + 0.110B NTSC/PAL
   # 0.299R + 0.587G + 0.114B ITU-R Rec BT.601
   const
-    fr: uint16 = (0.299 * 255).uint16
-    fg: uint16 = (0.587 * 255).uint16
-    fb: uint16 = (0.114 * 255).uint16
-    # fa: uint16 = (1.000 * 255).uint16
+    fr: uint32 = (299 * 255).uint32
+    fg: uint32 = (587 * 255).uint32
+    fb: uint32 = (114 * 255).uint32
+    # fa: uint32 = (1000 * 255).uint32
+    p: uint32 = 1000 * 255
+    q: uint32 = 1000 * 127
   let
-    r: uint8 = ((rgba.r * fr) div 255).uint8
-    g: uint8 = ((rgba.g * fg) div 255).uint8
-    b: uint8 = ((rgba.b * fb) div 255).uint8
-    # a: uint8 = ((rgba.a * fa) div 255).uint8
+    r: uint8 = ((rgba.r * fr + q) div p).uint8
+    g: uint8 = ((rgba.g * fg + q) div p).uint8
+    b: uint8 = ((rgba.b * fb + q) div p).uint8
+    # a: uint8 = ((rgba.a * fa + q) div p).uint8
   result = r + g + b
 
 proc toGrayCustomAW*(rgba: ColorRGBA): uint8 {.inline.} =
